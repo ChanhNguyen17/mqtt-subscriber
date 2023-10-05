@@ -1,0 +1,40 @@
+version: '3'
+services:
+  fastapi-app:
+    build:
+      context: fastapi
+      dockerfile: Dockerfile
+    container_name: fastapi-container
+    ports:
+      - "8008:8000"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB_NAME=mqtt_messages
+    command: uvicorn fastapi_app:app --host 0.0.0.0 --port 8000
+
+  mqtt-subscriber:
+    build:
+      context: mqtt_sub
+      dockerfile: Dockerfile
+    container_name: mqtt_sub-container
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB_NAME=mqtt_messages
+      - MQTT_BROKER_ADDRESS=broker.emqx.io
+      - MQTT_TOPIC=testtopic/#
+    command: python mqtt_subscriber.py
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-container
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

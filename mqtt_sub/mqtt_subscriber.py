@@ -2,14 +2,15 @@ import json
 
 import paho.mqtt.client as mqtt
 from datetime import datetime
+import os
 
-from database import db_save_message
+from mongo_client import db_save_message
 
 # MQTT Broker Configuration
-mqtt_broker_address = "broker.emqx.io"
+mqtt_broker_address = os.environ["MQTT_BROKER_ADDRESS"]
+mqtt_topic = os.environ["MQTT_TOPIC"]
 mqtt_port = 1883
 mqtt_keep_alive = 60
-mqtt_topic = "testtopic/#"
 
 
 # Connection success callback
@@ -31,19 +32,13 @@ def on_message(client, userdata, message):
     db_save_message(payload, timestamp)
 
 
-def run_mqtt_subscriber():
-    client = mqtt.Client()
+client = mqtt.Client()
 
-    # Set the callback function
-    client.on_connect = on_connect
-    client.on_message = on_message
+# Set the callback function
+client.on_connect = on_connect
+client.on_message = on_message
 
-    # Connect to the MQTT broker
-    client.connect(mqtt_broker_address, mqtt_port, mqtt_keep_alive)
-    client.subscribe(mqtt_topic)
-    client.loop_forever()
-
-
-# Run the application
-if __name__ == "__main__":
-    run_mqtt_subscriber()
+# Connect to the MQTT broker
+client.connect(mqtt_broker_address, mqtt_port, mqtt_keep_alive)
+client.subscribe(mqtt_topic)
+client.loop_forever()
